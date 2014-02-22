@@ -1,0 +1,23 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+apply plugin: 'jacoco'
+
+jacocoTestReport{
+	reports {
+		xml.enabled true
+		csv.enabled false
+		html.destination "${buildDir}/jacocoHtml"
+	}
+	onlyIf{true}
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+dependencies {
+	compile libraries.cdi_1_0
+	testCompile libraries.testing.junitAndMockito
+}

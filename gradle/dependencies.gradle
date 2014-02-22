@@ -1,0 +1,13 @@
+ext {
+	versions = [:]
+	libraries = [:]
+}
+
+versions.cdi_1_0 = '1.1-20130918'
+libraries.cdi_1_0 = "javax.enterprise:cdi-api:${versions.cdi_1_0}"
+libraries.testing = [:]
+libraries.testing.junitAndMockito = [
+		'junit:junit-dep:4.11',
+		'org.hamcrest:hamcrest-all:1.3',
+		'org.mockito:mockito-core:1.9.0'
+]

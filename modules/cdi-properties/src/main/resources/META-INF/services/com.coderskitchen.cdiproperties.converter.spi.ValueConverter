@@ -1,0 +1,8 @@
+com.coderskitchen.cdiproperties.converter.StringConverter
+com.coderskitchen.cdiproperties.converter.ByteConverter
+com.coderskitchen.cdiproperties.converter.ShortConverter
+com.coderskitchen.cdiproperties.converter.IntegerConverter
+com.coderskitchen.cdiproperties.converter.LongConverter
+com.coderskitchen.cdiproperties.converter.FloatConverter
+com.coderskitchen.cdiproperties.converter.DoubleConverter
+com.coderskitchen.cdiproperties.converter.BooleanConverter
