@@ -3,3 +3,11 @@ build/
 .gradle/
 .idea/
 atlassian-ide-plugin.xml
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*
+*.orig
