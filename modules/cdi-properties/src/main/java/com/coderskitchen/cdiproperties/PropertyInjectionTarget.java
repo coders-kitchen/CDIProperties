@@ -10,7 +10,6 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 /**

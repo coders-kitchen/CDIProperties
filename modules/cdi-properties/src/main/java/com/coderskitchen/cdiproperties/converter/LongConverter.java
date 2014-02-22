@@ -10,10 +10,7 @@ import com.coderskitchen.cdiproperties.converter.spi.ValueConverter;
 public class LongConverter implements ValueConverter<Long> {
 	@Override
 	public boolean accept(Class<Long> valueClass) {
-		if (valueClass.isPrimitive()) {
-			return valueClass.isAssignableFrom(long.class);
-		}
-		return valueClass == Long.class;
+			return valueClass.isAssignableFrom(long.class) || valueClass == Long.class;
 	}
 
 	@Override
