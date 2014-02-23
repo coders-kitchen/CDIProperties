@@ -10,10 +10,7 @@ import com.coderskitchen.cdiproperties.converter.spi.ValueConverter;
 public class IntegerConverter implements ValueConverter<Integer> {
 	@Override
 	public boolean accept(Class<Integer> valueClass) {
-		if (valueClass.isPrimitive()) {
-			return valueClass.isAssignableFrom(int.class);
-		}
-		return valueClass == Integer.class;
+			return valueClass.isAssignableFrom(int.class) || valueClass == Integer.class;
 	}
 
 	@Override
