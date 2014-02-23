@@ -12,6 +12,21 @@ jacocoTestReport{
 	onlyIf{true}
 }
 
+task javaDocJar(type: Jar, dependsOn: javadoc) {
+	classifier 'javadoc'
+	from "${docsDir}/javadoc"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier 'sources'
+	from sourceSets.main.allSource
+}
+
+artifacts {
+	archives sourcesJar
+	archives javaDocJar
+}
+
 repositories {
 	mavenLocal()
 	mavenCentral()
