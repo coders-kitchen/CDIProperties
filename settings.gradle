@@ -1,0 +1,8 @@
+include 'cdi-properties'
+
+rootProject.name = 'cdiproperties'
+rootProject.children.each { project ->
+	def projectName = project.name
+	project.projectDir = new File(settingsDir, "modules/${projectName}")
+	project.buildFileName = "${projectName}.gradle"
+}
