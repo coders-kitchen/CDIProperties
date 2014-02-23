@@ -19,30 +19,30 @@ import java.util.Set;
 
 /**
  * This extension enables CDI to inject properties from a property file.
- *
+ * <p/>
  * For achieving this goal, this extension makes CDI aware of @PropertyFile and @Property annotation.
- *
+ * <p/>
  * The value of the annotation @PropertyFile points to the property file that contains the properties required
  * by @Property annotations.
- *
+ * <p/>
  * <b>Example</b>
  * Given the properties file example.properties with the content
  * <pre>
  *   author=peter
  *   country=germany
  * </pre>
- *
+ * <p/>
  * These properties can now injected as shown in the following class Author
  * <pre>
  *
  * @PropertyFile("example.properties") public class Author {
  * @Property("author"); private String author;
  * @Property("country") private String country;
- *
+ * <p/>
  * public String getAuthor() {
  * return author;
  * }
- *
+ * <p/>
  * public String getCountry() {
  * return country;
  * }
@@ -57,7 +57,7 @@ public class CDIPropertiesExtension implements Extension {
 	public static final String PROPERTY_BASE_FOLDER = "com.coderskitchen.cdiproperties.baseFolder";
 	/**
 	 * Specifies that the lookup should first attempt to load the file from the file system
-	 *
+	 * <p/>
 	 * By default the classpath is preferred
 	 */
 	public static final String PROPERTY_PREFER_FILE_SYSTEM = "com.coderskitchen.cdiproperties.preferFileSystem";
@@ -69,7 +69,7 @@ public class CDIPropertiesExtension implements Extension {
 	private static final boolean PREFER_FILE_SYSTEM = Boolean.valueOf(System.getProperty(PROPERTY_PREFER_FILE_SYSTEM, "false"));
 	private static final String PROPERTIES_BASE_FOLDER = System.getProperty(PROPERTY_BASE_FOLDER, "");
 
-	private final Map<Field, Object> fieldValues = new HashMap<Field, Object>();
+	private static final Map<String, Properties> PROPERTIES_CACHE = new HashMap<String, Properties>();
 
 	/**
 	 * Prepares the injection process of properties from a property file.
@@ -85,15 +85,25 @@ public class CDIPropertiesExtension implements Extension {
 			return;
 		}
 		PropertyFile propertyFile = at.getAnnotation(PropertyFile.class);
-		String filename = propertyFile.value();
-		Properties properties = loadProperties(filename);
-		assignPropertiesToFields(at.getFields(), properties);
+		Properties properties = loadProperties(propertyFile);
+		Map<Field, Object> fieldValues = assignPropertiesToFields(at.getFields(), properties);
 
 		InjectionTarget<T> wrapped = new PropertyInjectionTarget<T>(fieldValues, pit, pit.getInjectionTarget());
 		pit.setInjectionTarget(wrapped);
 	}
 
-	private Properties loadProperties(String filename) throws IOException {
+	private Properties loadProperties(PropertyFile propertyFile) throws IOException {
+		String filename = propertyFile.value();
+		Properties properties;
+		if (PROPERTIES_CACHE.containsKey(filename)) {
+			properties = PROPERTIES_CACHE.get(filename);
+		} else {
+			properties = loadPropertiesFromFile(filename);
+		}
+		return properties;
+	}
+
+	private Properties loadPropertiesFromFile(String filename) throws IOException {
 		Properties properties = new Properties();
 		InputStream propertiesStream;
 		if (PREFER_FILE_SYSTEM) {
@@ -122,7 +132,8 @@ public class CDIPropertiesExtension implements Extension {
 		return null;
 	}
 
-	private <T> void assignPropertiesToFields(Set<AnnotatedField<? super T>> fields, Properties properties) {
+	private <T> Map<Field, Object> assignPropertiesToFields(Set<AnnotatedField<? super T>> fields, Properties properties) {
+		Map<Field, Object> fieldValues = new HashMap<Field, Object>();
 		for (AnnotatedField<? super T> field : fields) {
 			if (field.isAnnotationPresent(Property.class)) {
 				Property property = field.getAnnotation(Property.class);
@@ -131,5 +142,6 @@ public class CDIPropertiesExtension implements Extension {
 				fieldValues.put(memberField, value);
 			}
 		}
+		return fieldValues;
 	}
 }
