@@ -54,7 +54,7 @@ public class CDIPropertiesExtension implements Extension {
 	/**
 	 * Specifies the base properties folder for the lookup in the file system
 	 */
-	public static final String PROPERTY_PROPERTIES_FOLDER = "com.coderskitchen.cdiproperties.propertiesFolder";
+	public static final String PROPERTY_BASE_FOLDER = "com.coderskitchen.cdiproperties.baseFolder";
 	/**
 	 * Specifies that the lookup should first attempt to load the file from the file system
 	 *
@@ -67,7 +67,7 @@ public class CDIPropertiesExtension implements Extension {
 	public static final String PROPERTIES_FILE_NOT_FOUND = "Properties file [%s] not found!";
 
 	private static final boolean PREFER_FILE_SYSTEM = Boolean.valueOf(System.getProperty(PROPERTY_PREFER_FILE_SYSTEM, "false"));
-	private static final String PROPERTIES_BASE_FOLDER = System.getProperty(PROPERTY_PROPERTIES_FOLDER, "");
+	private static final String PROPERTIES_BASE_FOLDER = System.getProperty(PROPERTY_BASE_FOLDER, "");
 
 	private final Map<Field, Object> fieldValues = new HashMap<Field, Object>();
 
