@@ -38,6 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This extension enables CDI to inject properties from a property file.
@@ -76,6 +78,10 @@ import java.util.Set;
  */
 public class CDIPropertiesExtension implements Extension {
 
+	public static final String MESSAGE_PROPERTIES_FROM = "Properties from %s";
+	public static final String MESSAGE_PROPERTY_KEY_VALUE = "%s = %s";
+	Logger logger = Logger.getLogger(CDIPropertiesExtension.class.getName());
+
 	/**
 	 * Specifies the base properties folder for the lookup in the file system
 	 */
@@ -86,12 +92,20 @@ public class CDIPropertiesExtension implements Extension {
 	 * By default the classpath is preferred
 	 */
 	public static final String PROPERTY_PREFER_FILE_SYSTEM = "com.coderskitchen.cdiproperties.preferFileSystem";
+
+	/**
+	 * Specifies that the lookup should use a internal cache for properties files
+	 * <p/>
+	 * By default the cache is not used
+	 */
+	public static final String PROPERTY_USE_CACHING = "com.coderskitchen.cdiproperties.useCaching";
 	/**
 	 * Exception message when the properties couldn't found
 	 */
 	public static final String PROPERTIES_FILE_NOT_FOUND = "Properties file [%s] not found!";
 
 	private static final boolean PREFER_FILE_SYSTEM = Boolean.valueOf(System.getProperty(PROPERTY_PREFER_FILE_SYSTEM, "false"));
+	private static final boolean USE_CACHING = Boolean.valueOf(System.getProperty(PROPERTY_USE_CACHING, "false"));
 	private static final String PROPERTIES_BASE_FOLDER = System.getProperty(PROPERTY_BASE_FOLDER, "");
 
 	private static final Map<String, Properties> PROPERTIES_CACHE = new HashMap<String, Properties>();
@@ -109,35 +123,45 @@ public class CDIPropertiesExtension implements Extension {
 		if (!at.isAnnotationPresent(PropertyFile.class)) {
 			return;
 		}
-		PropertyFile propertyFile = at.getAnnotation(PropertyFile.class);
-		Properties properties = loadProperties(propertyFile);
-		Map<Field, Object> fieldValues = assignPropertiesToFields(at.getFields(), properties);
-
-		InjectionTarget<T> wrapped = new PropertyInjectionTarget<T>(fieldValues, pit, pit.getInjectionTarget());
-		pit.setInjectionTarget(wrapped);
+		try {
+			PropertyFile propertyFile = at.getAnnotation(PropertyFile.class);
+			Properties properties = loadProperties(propertyFile, pit.getAnnotatedType().getJavaClass());
+			Map<Field, Object> fieldValues = assignPropertiesToFields(at.getFields(), properties);
+			InjectionTarget<T> wrapped = new PropertyInjectionTarget<T>(fieldValues, pit, pit.getInjectionTarget());
+			pit.setInjectionTarget(wrapped);
+		} catch (Exception e) {
+			pit.addDefinitionError(e);
+		}
 	}
 
-	private Properties loadProperties(PropertyFile propertyFile) throws IOException {
+	private Properties loadProperties(PropertyFile propertyFile, Class fromClass) throws IOException {
 		String filename = propertyFile.value();
 		Properties properties;
-		if (PROPERTIES_CACHE.containsKey(filename)) {
+		if (USE_CACHING && PROPERTIES_CACHE.containsKey(filename)) {
 			properties = PROPERTIES_CACHE.get(filename);
 		} else {
-			properties = loadPropertiesFromFile(filename);
+			properties = loadPropertiesFromFile(filename, fromClass);
+			PROPERTIES_CACHE.put(filename, properties);
 		}
+
+		logger.log(Level.FINER, String.format(MESSAGE_PROPERTIES_FROM, filename));
+		for (Map.Entry<Object, Object> objectObjectEntry : properties.entrySet()) {
+			logger.log(Level.FINER, String.format(MESSAGE_PROPERTY_KEY_VALUE, objectObjectEntry.getKey(), objectObjectEntry.getValue()));
+		}
+
 		return properties;
 	}
 
-	private Properties loadPropertiesFromFile(String filename) throws IOException {
+	private Properties loadPropertiesFromFile(String filename, Class fromClass) throws IOException {
 		Properties properties = new Properties();
 		InputStream propertiesStream;
 		if (PREFER_FILE_SYSTEM) {
-			propertiesStream = loadPropertyFromFileSystem(filename);
+			propertiesStream = loadPropertiesFromResources(filename, fromClass);
 			if (propertiesStream == null) {
-				propertiesStream = getClass().getClassLoader().getResourceAsStream(filename);
+				propertiesStream = fromClass.getClassLoader().getResourceAsStream(filename);
 			}
 		} else {
-			propertiesStream = getClass().getClassLoader().getResourceAsStream(filename);
+			propertiesStream = loadPropertiesFromResources(filename, fromClass);
 			if (propertiesStream == null) {
 				propertiesStream = loadPropertyFromFileSystem(filename);
 			}
@@ -147,6 +171,14 @@ public class CDIPropertiesExtension implements Extension {
 		}
 		properties.load(propertiesStream);
 		return properties;
+	}
+
+	private InputStream loadPropertiesFromResources(String filename, Class fromClass) {
+		InputStream propertiesStream = fromClass.getClassLoader().getResourceAsStream(filename);
+		if (propertiesStream == null) {
+			propertiesStream = fromClass.getResourceAsStream(filename);
+		}
+		return propertiesStream;
 	}
 
 	private InputStream loadPropertyFromFileSystem(String filename) throws IOException {
