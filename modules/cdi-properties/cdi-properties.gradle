@@ -4,6 +4,9 @@ apply plugin: 'signing'
 
 apply plugin: 'jacoco'
 
+sourceCompatibility = '1.6'
+targetCompatibility = '1.6'
+
 jacocoTestReport{
 	reports {
 		xml.enabled true
